@@ -1,0 +1,33 @@
+[project]
+name = "VI2026-PythonPackage"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "YOUR NAME", email = "YOUREMAIL@YOURDOMAIN.COM"},
+]
+dependencies = [
+    "azure-kinect-video-player @ https://github.com/JonBoyleCoding/python-azure-kinect-video-player/archive/refs/tags/v0.2.6.tar.gz",
+    "scikit-learn<2.0.0,>=1.2.1",
+    "opencv-python<5.0.0.0,>=4.9.0.80",
+    "typer<1.0.0,>=0.9.0",
+    "rich<15.0.0,>=14.0.0",
+]
+requires-python = "<3.14,>=3.12"
+readme = "README.md"
+license = {text = "NONE"}
+
+
+[project.scripts]
+pipeline_and_vision = "vi2026_pythonpackage.pipeline_and_vision:app"
+
+[tool.setuptools]
+packages = { find = { include = ["vi2026_pythonpackage"] } }
+
+[tool.pdm.scripts]
+_.env = {PYTHONPATH = ""}
+
+[dependency-groups]
+dev = [
+    "pytest<6.0,>=5.2",
+]
+

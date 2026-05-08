@@ -1,0 +1,11 @@
+name: vi2026_package
+channels:
+  - conda-forge
+dependencies:
+  - python=3.13
+  - ffmpeg
+  - pdm
+variables:
+  PDM_IGNORE_ACTIVE_VENV: 1
+  PDM_USE_VENV: 1
+  PDM_VENV_IN_PROJECT: 1
