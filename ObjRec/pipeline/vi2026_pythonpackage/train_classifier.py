@@ -135,13 +135,16 @@ def main(
     X_all_s = scaler.fit_transform(X)
     best_clf.fit(X_all_s, y)
 
-    joblib.dump(best_clf, data_dir / "model.joblib")
-    joblib.dump(scaler,   data_dir / "scaler.joblib")
-    (data_dir / "classes.txt").write_text("\n".join(class_names))
+    save_dir = Path(__file__).parent.parent / "models"
+    save_dir.mkdir(exist_ok=True)
 
-    print(f"\nSaved model   -> {data_dir / 'model.joblib'}")
-    print(f"Saved scaler  -> {data_dir / 'scaler.joblib'}")
-    print(f"Saved classes -> {data_dir / 'classes.txt'}")
+    joblib.dump(best_clf, save_dir / "model.joblib")
+    joblib.dump(scaler,   save_dir / "scaler.joblib")
+    (save_dir / "classes.txt").write_text("\n".join(class_names))
+
+    print(f"\nSaved model   -> {save_dir / 'model.joblib'}")
+    print(f"Saved scaler  -> {save_dir / 'scaler.joblib'}")
+    print(f"Saved classes -> {save_dir / 'classes.txt'}")
 
 
 if __name__ == "__main__":
