@@ -12,7 +12,7 @@ Run from the pipeline directory:
 Saves model.joblib, scaler.joblib, and classes.txt to the data directory.
 Person C loads these for test set evaluation.
 
-- Karim
+Karim
 """
 
 import sys
@@ -35,9 +35,12 @@ def load_dataset(data_dir: Path):
     """
     Load paired depth and RGB crops from Person A's output_frames layout.
 
-    data_dir: root folder with one subfolder per class
-    returns: features (N, D), labels (N,), class_names, class_dirs
+    parameters: 
+        data_dir: root folder with one subfolder per class (str or Path)
+    returns: 
+        features (N, D), labels (N,), class_names, class_dirs
     """
+    data_dir = Path(data_dir)  # Convert str to Path if needed
     class_dirs = sorted(d for d in data_dir.iterdir() if d.is_dir())
     if not class_dirs:
         print(f"No class subfolders found in {data_dir}")
