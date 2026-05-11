@@ -65,11 +65,10 @@ import typer
 
 from azure_kinect_video_player.playback_wrapper import AzureKinectPlaybackWrapper
 
-# ---------------------------------------------------------------------------
-# CONSTANTS — shared with Person B, do not change without updating B's script
-# ---------------------------------------------------------------------------
 
-# Depth range (mm) for isolating the object. Objects placed ~10-48 cm from sensor.
+# CONSTANTS — used in train classifier, keep as is for easy import
+
+# Depth range (mm) for isolating the object. Objects placed 10-48 cm from sensor.
 MIN_DEPTH = 100
 MAX_DEPTH = 480
 
@@ -110,9 +109,9 @@ LABEL_MAP = {
     ord("b"): "robot",
 }
 
-# ---------------------------------------------------------------------------
-# CORE SEGMENTATION FUNCTION — importable by Person B for batch processing
-# ---------------------------------------------------------------------------
+
+# CORE SEGMENTATION FUNCTION — imported into train classifier for batch processing
+
 
 def segment_object(depth_image, colour_image=None, offset_x=0, offset_y=0):
     """
@@ -198,9 +197,7 @@ def segment_object(depth_image, colour_image=None, offset_x=0, offset_y=0):
     return cropped_depth, cropped_rgb, (x, y, w, h)
 
 
-# ---------------------------------------------------------------------------
-# DATASET SAVING HELPER
-# ---------------------------------------------------------------------------
+# Dataset saving and labelling
 
 def save_frame(label, cropped_depth, cropped_rgb, frame_counters):
     """
@@ -238,9 +235,7 @@ def save_frame(label, cropped_depth, cropped_rgb, frame_counters):
     return count
 
 
-# ---------------------------------------------------------------------------
 # DISPLAY HELPER — renders all overlays onto display copies of each frame
-# ---------------------------------------------------------------------------
 
 def render_displays(colour_image, depth_image, ir_image,
                     cropped_rgb, bbox,
@@ -310,9 +305,7 @@ def render_displays(colour_image, depth_image, ir_image,
         cv2.imshow("IR", ir_image)
 
 
-# ---------------------------------------------------------------------------
 # MAIN APPLICATION
-# ---------------------------------------------------------------------------
 
 app = typer.Typer()
 
