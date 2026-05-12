@@ -107,8 +107,8 @@ def main(
     X_val_s   = scaler.transform(X_val)
 
     classifiers = {
-        "SVM linear": SVC(kernel="linear", C=1.0),
-        "SVM RBF"   : SVC(kernel="rbf",    C=10.0, gamma="scale"),
+        "SVM linear": SVC(kernel="linear", C=1.0, probability=True),
+        "SVM RBF"   : SVC(kernel="rbf",    C=10.0, gamma="scale", probability=True),
     }
 
     print("\nValidation results:")

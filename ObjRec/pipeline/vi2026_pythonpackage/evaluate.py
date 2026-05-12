@@ -27,7 +27,7 @@ import numpy as np
 import typer
 from rich.console import Console
 from rich.table import Table
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, classification_report
 
 from vi2026_pythonpackage.features import extract_features
 
@@ -38,23 +38,10 @@ app = typer.Typer()
 def load_test_dataset(data_dir: Path, class_names: list[str]):
     """
     Load test crops and extract features, mapping labels to the training class order.
-
-    Parameters
-    ----------
-    data_dir : Path
-        Root folder with one subfolder per class (same layout as training output_frames).
-    class_names : list[str]
-        Ordered class list from classes.txt — must match the label indices used at
-        training time.  Any folder in data_dir not in this list is skipped with a warning.
-
-    Returns
-    -------
-    X : np.ndarray  (N, D)  feature matrix
-    y : np.ndarray  (N,)    integer labels aligned to class_names
     """
     name_to_idx = {name: idx for idx, name in enumerate(class_names)}
 
-    X, y = [], []
+    X, y = [],[]
     for class_dir in sorted(data_dir.iterdir()):
         if not class_dir.is_dir():
             continue
@@ -93,9 +80,6 @@ def load_test_dataset(data_dir: Path, class_names: list[str]):
 def plot_confusion_matrix(cm: np.ndarray, class_names: list[str], save_path: Path):
     """
     Save a colour-coded confusion matrix as a PNG using matplotlib.
-
-    Rows = true labels, columns = predicted labels.
-    Diagonal values show correct predictions; off-diagonal are misclassifications.
     """
     fig, ax = plt.subplots(figsize=(max(8, len(class_names)), max(6, len(class_names))))
 
@@ -113,7 +97,6 @@ def plot_confusion_matrix(cm: np.ndarray, class_names: list[str], save_path: Pat
     )
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
 
-    # Annotate each cell with the count; use white text on dark cells
     thresh = cm.max() / 2.0
     for i in range(len(class_names)):
         for j in range(len(class_names)):
@@ -131,14 +114,12 @@ def plot_confusion_matrix(cm: np.ndarray, class_names: list[str], save_path: Pat
 def main(
     test_dir: Path = typer.Argument(..., help="Path to labelled test data folder"),
     models_dir: Path = typer.Option(None, help="Directory containing model.joblib / scaler.joblib / classes.txt"),
-    output_dir: Path = typer.Option(None, help="Where to save the confusion matrix PNG (defaults to test_dir)"),
+    output_dir: Path = typer.Option(None, help="Where to save the confusion matrix PNG"),
 ):
-    """Evaluate the trained classifier on a labelled test dataset and produce a confusion matrix."""
     if not test_dir.is_dir():
         console.print(f"[red]Error: {test_dir} is not a directory[/red]")
         raise SystemExit(1)
 
-    # Resolve paths
     if models_dir is None:
         models_dir = Path(__file__).parent.parent / "models"
     if output_dir is None:
@@ -146,7 +127,6 @@ def main(
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Load model artefacts
     model_path   = models_dir / "model.joblib"
     scaler_path  = models_dir / "scaler.joblib"
     classes_path = models_dir / "classes.txt"
@@ -159,26 +139,42 @@ def main(
     clf          = joblib.load(model_path)
     scaler       = joblib.load(scaler_path)
     class_names  = classes_path.read_text().strip().splitlines()
+    
+    # --- Register the unknown class for Open-Set Recognition ---
+    if "unknown" not in class_names:
+        class_names.append("unknown")
 
     console.print(f"\n[bold]Loaded model:[/bold]  {model_path}")
     console.print(f"[bold]Classes ({len(class_names)}):[/bold]  {', '.join(class_names)}\n")
 
-    # Load test features
     console.print(f"[bold]Loading test data from:[/bold] {test_dir}")
     X_test, y_test = load_test_dataset(test_dir, class_names)
     console.print(f"  {len(X_test)} samples loaded, feature dim = {X_test.shape[1]}\n")
 
-    # Scale and predict
     X_test_s = scaler.transform(X_test)
-    y_pred   = clf.predict(X_test_s)
+    
+    # --- CONFIDENCE THRESHOLDING (Open-Set Recognition) ---
+    try:
+        probs = clf.predict_proba(X_test_s)
+        max_probs = np.max(probs, axis=1)
+        best_preds = np.argmax(probs, axis=1)
+        
+        UNKNOWN_IDX = class_names.index("unknown")
+        CONFIDENCE_THRESHOLD = 0.10 
+        
+        # Re-route low confidence predictions to 'unknown'
+        y_pred = np.where(max_probs < CONFIDENCE_THRESHOLD, UNKNOWN_IDX, best_preds)
+        console.print("[green]Confidence thresholding applied for 'unknown' objects.[/green]")
+        
+    except AttributeError:
+        # Fallback if the SVM was not trained with probability=True
+        console.print("[yellow]Warning: Model does not support probabilities. Please retrain with `probability=True` to enable 'unknown' object rejection. Falling back to standard prediction.[/yellow]")
+        y_pred = clf.predict(X_test_s)
 
-    # Overall accuracy
+    # --- RESULTS ---
     overall_acc = float(np.sum(y_pred == y_test)) / len(y_test)
-
-    # Per-class accuracy using the confusion matrix diagonal
     cm = confusion_matrix(y_test, y_pred, labels=list(range(len(class_names))))
 
-    # Print results table
     table = Table(title=f"Per-class Accuracy   (overall: {overall_acc:.1%})")
     table.add_column("Class", style="cyan", no_wrap=True)
     table.add_column("Total", justify="right")
@@ -194,11 +190,14 @@ def main(
     console.print(table)
     console.print(f"\n[bold green]Overall accuracy: {overall_acc:.1%}[/bold green]  ({int(np.sum(y_pred == y_test))}/{len(y_test)} correct)\n")
 
-    # Save confusion matrix PNG
+    # --- ADVANCED METRICS (Worksheet 3 - Extension A) ---
+    console.print("[bold]Classification Report (Precision, Recall, F1-Score):[/bold]")
+    report = classification_report(y_test, y_pred, target_names=class_names, zero_division=0)
+    console.print(report)
+
     cm_path = output_dir / "confusion_matrix.png"
     plot_confusion_matrix(cm, class_names, cm_path)
     console.print(f"[bold]Confusion matrix saved →[/bold] {cm_path}\n")
-
 
 if __name__ == "__main__":
     sys.exit(app())

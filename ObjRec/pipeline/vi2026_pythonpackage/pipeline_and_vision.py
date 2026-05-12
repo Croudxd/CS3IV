@@ -82,7 +82,7 @@ MIN_CONTOUR_AREA = 500
 MORPH_KERNEL_SIZE = (5, 5)
 
 # Root directory for saved labelled crops.
-OUTPUT_DIR = Path("output_frames")
+OUTPUT_DIR = Path("test_frames")
 
 # RGB-to-depth registration offsets (pixels), calibrated empirically.
 # Derived from slider values: raw 435 → offset -65, raw 515 → offset +15.
@@ -93,7 +93,7 @@ OFFSET_Y = 15    # vertical shift
 # Keyboard label map: press the key to set the active label before saving frames.
 # One long video is used where different objects appear in sequence — switch label
 # each time a new object enters frame. Keys 1-9 cover objects 1-9;
-# 0/a/b cover objects 10-12 (q/s/space are reserved controls).
+# 0/a/b cover objects 10-12.
 LABEL_MAP = {
     ord("1"): "mug",
     ord("2"): "illuminator",
@@ -107,6 +107,7 @@ LABEL_MAP = {
     ord("0"): "spray",
     ord("a"): "dog",
     ord("b"): "robot",
+    ord("u"): "unknown",
 }
 
 

@@ -1,8 +1,8 @@
-Einstein
 baby
 cup-noodle
 dinosaur
 dog
+Einstein
 hour-glass
 illuminator
 label-printer
