@@ -11,6 +11,7 @@ dependencies = [
     "opencv-python<5.0.0.0,>=4.9.0.80",
     "typer<1.0.0,>=0.9.0",
     "rich<15.0.0,>=14.0.0",
+    "matplotlib<4.0.0,>=3.7.0",
 ]
 requires-python = "<3.14,>=3.12"
 readme = "README.md"
@@ -19,6 +20,8 @@ license = {text = "NONE"}
 
 [project.scripts]
 pipeline_and_vision = "vi2026_pythonpackage.pipeline_and_vision:app"
+train-classifier = "vi2026_pythonpackage.train_classifier:app"
+evaluate = "vi2026_pythonpackage.evaluate:app"
 
 [tool.setuptools]
 packages = { find = { include = ["vi2026_pythonpackage"] } }
